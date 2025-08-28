@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Day 8 - MongoDB Notes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(120deg, #89f7fe 0%, #66a6ff 100%);
+            background-attachment: fixed;
+            color: #fff;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Main Header */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        /* Main Container for the notes */
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        /* Card Styling with Glassmorphism Effect */
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); /* For Safari */
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Modern Hover Effect for Cards */
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Card Title */
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* List Styling */
+        .card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .card li {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .card li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #89f7fe;
+            font-weight: bold;
+        }
+
+        /* Styling for code snippets */
+        code {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            color: #f0f0f0;
+        }
+        
+        /* Mini Activity & Important Notes Styling */
+        .mini-activity, .important-note {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #89f7fe;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 8px;
+        }
+        
+        .important-note {
+             border-left-color: #ffc107;
+        }
+        
+        .mini-activity p, .important-note p {
+            margin: 0;
+        }
+
+        /* Responsive Design for smaller screens */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Day 8 - MongoDB (Database Layer of Full Stack)</h1>
+
+    <div class="container">
+        <!-- Static cards from before -->
+        <div class="card">
+            <h2>1. Introduction to MongoDB in Full Stack</h2>
+            <ul>
+                <li>Role of MongoDB in MERN stack.</li>
+                <li>Stores application data in <strong>JSON-like documents</strong>.</li>
+                <li>Works seamlessly with Node.js (backend).</li>
+                <li>Provides flexibility (no strict schema like SQL).</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>2. Setting Up MongoDB</h2>
+            <ul>
+                <li>Install MongoDB & MongoDB Compass.</li>
+                <li>Cloud Alternative: MongoDB Atlas (free tier).</li>
+                <li>Create <strong>first database</strong> (<code>fullstackDB</code>) and collection (<code>users</code>).</li>
+            </ul>
+        </div>
+        
+        <!-- This card will be populated with data from our server -->
+        <div class="card">
+            <h2>Users from Database</h2>
+            <ul id="users-list">
+                <!-- User data will be inserted here by JavaScript -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // This script runs after the HTML document has been fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const usersList = document.getElementById('users-list');
+
+            // Fetch data from our backend server's /users endpoint
+            fetch('http://localhost:3000/users')
+                .then(response => {
+                    // Check if the request was successful
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json(); // Parse the JSON data from the response
+                })
+                .then(users => {
+                    // If there are no users, display a message
+                    if (users.length === 0) {
+                        usersList.innerHTML = '<li>No users found in the database.</li>';
+                        return;
+                    }
+
+                    // Clear any existing list items (like a loading message)
+                    usersList.innerHTML = '';
+
+                    // Loop through each user and create a list item for them
+                    users.forEach(user => {
+                        const listItem = document.createElement('li');
+                        // Display the user's name and email
+                        listItem.textContent = `Name: ${user.name}, Email: ${user.email}, Role: ${user.role}`;
+                        usersList.appendChild(listItem);
+                    });
+                })
+                .catch(error => {
+                    // If there's an error (e.g., server is not running), display an error message
+                    console.error('Error fetching users:', error);
+                    usersList.innerHTML = '<li>Could not fetch users. Is the server running?</li>';
+                });
+        });
+    </script>
+
+</body>
+</html>
